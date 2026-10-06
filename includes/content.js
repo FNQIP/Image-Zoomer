@@ -714,15 +714,31 @@
             return ret;
         },
         toFunction: function(rule, param, inline) {
-            if (typeof rule[param] !== "function" && (inline ? /^:\s*\S/ : /^:\n\s*\S/).test(rule[param]))
+            if (typeof rule[param] !== "function" && (inline ? /^:\s*\S/ : /^:\n\s*\S/).test(rule[param])) {
+                /* MV3 内容脚本继承扩展 CSP(禁 eval)，优先使用 sieve_rules.js 中预编译的同源规则 */
+                if (typeof izRuleFn === "function") {
+                    var pre = izRuleFn(param, rule[param]);
+                    if (pre) {
+                        rule[param] = pre.bind(PVI);
+                        return;
+                    }
+                }
+                if (PVI.evalBlocked) return false;
                 try {
                     rule[param] = Function(
                         "var $ = arguments; " + (inline ? "return " : "") + rule[param].slice(1)
                     ).bind(PVI);
                 } catch (ex) {
-                    console.error(app.name + ": " + param + " - " + ex.message);
+                    if (ex instanceof EvalError || /Content Security Policy|unsafe-eval/i.test(ex.message)) {
+                        PVI.evalBlocked = true;
+                        console.warn(
+                            app.name +
+                                ": 当前页面 CSP 禁止 eval，JS 型规则已停用，相关图片将回退为直接链接放大（仅提示一次）"
+                        );
+                    } else console.error(app.name + ": " + param + " - " + ex.message);
                     return false;
                 }
+            }
         },
         httpPrepend: function(url, preDomain) {
             if (preDomain) url = url.replace(/^(?!#?(?:https?:|\/\/|data:)|$)(#?)/, "$1" + preDomain);
@@ -2612,16 +2628,33 @@
                 delete PVI.resolving[d.id];
                 if (!d.return_url) PVI.create();
                 if (!d.cache && (d.m === true || d.params.rule.skip_resolve)) {
-                    try {
-                        if (rule.res === 1 && typeof d.params.rule.req_res === "string")
-                            rule.res = Function("$", d.params.rule.req_res);
-                        PVI.node = trg;
-                        d.m = rule.res.call(PVI, d.params);
-                    } catch (ex) {
-                        console.error(app.name + ": [rule " + d.params.rule.id + "] " + ex.message);
-                        if (!d.return_url && trg === PVI.TRG) PVI.show("R_js");
-                        return 1;
-                    }
+                    var preRes =
+                        typeof izRuleFn === "function" &&
+                        typeof d.params.rule.req_res === "string" &&
+                        izRuleFn("res", d.params.rule.req_res);
+                    if (PVI.evalBlocked && d.m === true && !preRes) {
+                        /* CSP 已禁止 eval 且无预编译版本, JS 型 res 规则直接回退 */
+                        d.m = false;
+                    } else
+                        try {
+                            if (rule.res === 1 && typeof d.params.rule.req_res === "string")
+                                rule.res = preRes || Function("$", d.params.rule.req_res);
+                            PVI.node = trg;
+                            d.m = rule.res.call(PVI, d.params);
+                        } catch (ex) {
+                            if (ex instanceof EvalError || /Content Security Policy|unsafe-eval/i.test(ex.message)) {
+                                PVI.evalBlocked = true;
+                                console.warn(
+                                    app.name +
+                                        ": 当前页面 CSP 禁止 eval，JS 型规则已停用，相关图片将回退为直接链接放大（仅提示一次）"
+                                );
+                                d.m = false;
+                            } else {
+                                console.error(app.name + ": [rule " + d.params.rule.id + "] " + ex.message);
+                                if (!d.return_url && trg === PVI.TRG) PVI.show("R_js");
+                                return 1;
+                            }
+                        }
                     if (d.params.url) d.params.url = d.params.url.join("");
                     if (cfg.tls.sieveCacheRes && !d.params.rule.skip_resolve && d.m)
                         Port.send({

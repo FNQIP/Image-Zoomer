@@ -75,6 +75,13 @@ try {
         Element.prototype.matches = Element.prototype.webkitMatchesSelector;
 }
 platform.crx = true;
+/* 内容脚本环境中初始化 app 信息(后台由 app_bg.js 负责, 两者互不影响) */
+try {
+    app = chrome.runtime.getManifest();
+    app = { name: app.name, version: app.version };
+} catch (ex) {
+    app = { name: "Image Zoomer", version: "" };
+}
 Port = {
     listen: function(listener) {
         if (this.listener) chrome.runtime.onMessage.removeListener(this.listener);

@@ -1,7 +1,7 @@
 {
    "manifest_version": 3,
    "name": "Image Zoomer",
-   "version": "1.2.0",
+   "version": "1.2.1",
    "minimum_chrome_version": "88",
    "description": "最简单的图片Hover放大插件，即安即用",
    "author": "merrier1993",
@@ -13,7 +13,7 @@
    },
    "content_scripts": [ {
       "all_frames": true,
-      "js": [ "includes/app.js" ],
+      "js": [ "includes/app.js", "includes/sieve_rules.js" ],
       "matches": [ "<all_urls>" ],
       "run_at": "document_start"
    }, {
