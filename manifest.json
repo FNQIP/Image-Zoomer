@@ -23,7 +23,5 @@
       "run_at": "document_end"
    } ],
    "permissions": [ "downloads", "history", "storage" ],
-   "host_permissions": [ "*://*/*" ],
-   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAv7sqjNdpidcP5lC/w++llUxJ4utPwmJwmY8OeCBmBkBw1OC701wdZHaYYc9OemqSah+QnRtHpd+BhOucDPspJZ+7EujO1JhteQPJryeYnheF++bKttwU7Q45hGb9lh6KcbOZIS9lYLUJe6WWJs8VE6DGLxeSXCXsao3Ok77lnvsyXPAvUwWZL/bKY2sUrxH+gh+Wqgw81Lu4HYllo+e27rKQ6KFsCYaMp2p6tPfNeOdM/2L5N5ZNiQdXwdDQnb/apbPDi4lzIeBD95/ZuTqYJP94OBsGSFl4vUKecinnJcBidQnQ8j6RJQ8aqLXRmINer69kBKDR6LYb5QIE2WTlhwIDAQAB",
-   "update_url": "https://clients2.google.com/service/update2/crx"
+   "host_permissions": [ "*://*/*" ]
 }
