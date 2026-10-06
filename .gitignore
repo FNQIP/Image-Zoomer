@@ -1,0 +1,25 @@
+# ===== WorkBuddy 内部数据（非扩展源码，不提交） =====
+.workbuddy/
+
+# ===== 操作系统 / 编辑器临时文件 =====
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# ===== IDE / 编辑器目录 =====
+.vscode/
+.idea/
+*.sublime-workspace
+
+# ===== Chrome 扩展私钥（若导出 crx 时生成） =====
+*.pem
+
+# ===== 依赖与构建产物（当前项目无，预留） =====
+node_modules/
+dist/
+build/
+*.zip
