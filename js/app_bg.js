@@ -17,32 +17,47 @@ var extURL = function(path) {
 
 cfg = {
     get: function(keys) {
-        return chrome.storage.local.get(keys).then(function(items) {
-            var key;
-            for (key in items)
-                try {
-                    if (!items[key]) throw Error;
-                    items[key] = JSON.parse(items[key]);
-                } catch (ex) {
-                    delete items[key];
-                }
-            return items;
+        return new Promise(function(resolve, reject) {
+            chrome.storage.local.get(keys, function(items) {
+                if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
+                var key;
+                for (key in items)
+                    try {
+                        if (!items[key]) throw Error;
+                        items[key] = JSON.parse(items[key]);
+                    } catch (ex) {
+                        delete items[key];
+                    }
+                resolve(items);
+            });
         });
     },
     set: function(items) {
         var key;
         var out = {};
         for (key in items) out[key] = JSON.stringify(items[key]);
-        return chrome.storage.local.set(out);
+        return new Promise(function(resolve, reject) {
+            chrome.storage.local.set(out, function() {
+                if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
+                resolve();
+            });
+        });
     },
     remove: function(keys) {
-        return chrome.storage.local.remove(keys);
+        return new Promise(function(resolve, reject) {
+            chrome.storage.local.remove(keys, function() {
+                if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
+                resolve();
+            });
+        });
     }
 };
 
 Tabs = {
     create: function(params) {
-        return chrome.tabs.create(params);
+        var p = chrome.tabs.create(params);
+        if (p && typeof p.catch === "function") p.catch(function() {});
+        return p;
     }
 };
 
@@ -78,9 +93,12 @@ to_fromHistory =
 
 saveURI = function(details) {
     if (!details || !details.url) return;
+    var p;
     try {
-        return chrome.downloads.download({ url: details.url, incognito: details.isPrivate });
+        p = chrome.downloads.download({ url: details.url, incognito: details.isPrivate });
     } catch (ex) {
-        return chrome.downloads.download({ url: details.url });
+        p = chrome.downloads.download({ url: details.url });
     }
+    if (p && typeof p.catch === "function") p.catch(function() {});
+    return p;
 };
